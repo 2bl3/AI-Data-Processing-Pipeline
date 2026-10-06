@@ -68,3 +68,14 @@ An unplayed game should have the value set to as "null" for both "away_score" an
 will be represented as "null" since "0" is an actual score that can be achieved. 
 
 The initial contract version is '1.0'.
+
+## Step 6: Local Redis Setup
+
+Redis was started locally using the Redis 7.2 Docker image.
+
+- Redis version: 7.2
+- Container ID: `98f63c976bd386f1c8121264f856b6ba8b84b7320a67b9a04a18b911f7ef8e57`
+- Redis port: `6379`
+- Stream name: `games`
+
+Redis connectivity was verified using `redis-cli PING`, which returned `PONG`.
