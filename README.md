@@ -42,3 +42,29 @@ The initial processor will use the following columns from `games.csv`:
 - `home_team` - home team
 - `home_score` - home team score
 - `overtime` - overtime indicator
+
+## Step 5: Agree on a message contract
+
+## Table
+
+| Internal field | Type | Required? | Meaning | Source column |
+|---|---|---|---|---|
+| `game_key` | string | Yes | Unique identifier for the game | `game_id` |
+| `contract_version` | string | Yes | Version of this message contract | Not from source |
+| `source_version` | string | Yes | Version of the source data | Metadata `sha` |
+| `season` | integer | Yes | NFL season | `season` |
+| `game_type` | string | Yes | Type of game | `game_type` |
+| `week` | integer | Yes | Week of the season | `week` |
+| `kickoff_time` | datetime | Yes | Scheduled game date/time | `gameday`, `gametime` |
+| `away_team` | string | Yes | Away team abbreviation | `away_team` |
+| `home_team` | string | Yes | Home team abbreviation | `home_team` |
+| `away_score` | integer/null | No | Final away-team score | `away_score` |
+| `home_score` | integer/null | No | Final home-team score | `home_score` |
+| `overtime` | boolean | Yes | Whether the game went to overtime | `overtime` |
+
+## Score Representation
+
+An unplayed game should have the value set to as "null" for both "away_score" and "home_score". Also, a missing score
+will be represented as "null" since "0" is an actual score that can be achieved. 
+
+The initial contract version is '1.0'.
