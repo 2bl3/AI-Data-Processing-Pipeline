@@ -1,0 +1,10 @@
+{
+  "filename": "games.csv",
+  "source_api": "https://api.github.com/repos/nflverse/nfldata/contents/data/games.csv",
+  "source_sha": "32e734a73d6403841a9742af3ae6f8ee2b98b38f",
+  "download_url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv",
+  "retrieved_at": "2026-11-03T17:02:08.834506+00:00",
+  "metadata_http_status": 200,
+  "csv_http_status": 200,
+  "size_bytes": 2187853
+}
