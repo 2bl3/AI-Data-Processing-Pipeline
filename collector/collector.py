@@ -45,6 +45,8 @@ MANIFEST_PATH = DATA_DIR / "source_manifest.json"
 
 STREAM_NAME = "nfl:games:v1"
 CONTRACT_VERSION = "1.0"
+SOURCE_REFERENCE = "https://github.com/nflverse/nfldata/blob/master/data/games.csv"
+KICKOFF_TIMEZONE = "America/New_York"
 
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
@@ -267,16 +269,25 @@ def get_source(session, offline=False):
 # --------------------------------------------------
 
 def optional_integer(value):
-    """Convert a CSV value to int, preserving missing values."""
+    """Parse a nullable CSV integer; never convert bad values to null."""
 
     if value is None or value.strip() in ("", "NA"):
         return None
 
-    return int(value)
+    return int(value.strip())
 
 
-def standardize_game(row, source_sha):
-    """Convert an nflverse row into the team's message contract."""
+def optional_text(value):
+    """Represent a missing optional CSV string as JSON null."""
+
+    if value is None or value.strip() in ("", "NA"):
+        return None
+
+    return value.strip()
+
+
+def standardize_game(row, manifest):
+    """Convert a source CSV row to exactly the v1.0 contract fields."""
 
     game_id = row["game_id"].strip()
 
@@ -286,62 +297,70 @@ def standardize_game(row, source_sha):
     home_score = optional_integer(row["home_score"])
     away_score = optional_integer(row["away_score"])
 
-    completed = home_score is not None and away_score is not None
+    if home_score is not None and away_score is not None:
+        status = "completed"
+    elif home_score is None and away_score is None:
+        status = "scheduled"
+    else:
+        status = "incomplete"
 
+    # Keep missing nullable fields as None (serialized as JSON null).
     return {
         "contract_version": CONTRACT_VERSION,
+        "source_version": manifest["source_sha"],
+        "source_reference": SOURCE_REFERENCE,
+        "retrieved_at": manifest["retrieved_at"],
         "game_id": game_id,
         "season": int(row["season"]),
+        "game_type": row["game_type"].strip(),
         "week": int(row["week"]),
-        "game_type": row["game_type"],
-        "game_date": row["gameday"],
-        "kickoff_time_et": row["gametime"] or None,
-        "home_team": row["home_team"],
-        "away_team": row["away_team"],
-        "home_score": home_score,
+        "gameday": row["gameday"].strip(),
+        "gametime": optional_text(row["gametime"]),
+        "kickoff_timezone": KICKOFF_TIMEZONE,
+        "away_team": row["away_team"].strip(),
+        "home_team": row["home_team"].strip(),
+        "away_rest": optional_integer(row["away_rest"]),
+        "home_rest": optional_integer(row["home_rest"]),
+        "div_game": optional_integer(row["div_game"]),
+        "location": optional_text(row["location"]),
         "away_score": away_score,
-        "completed": completed,
-        "source_name": "nflverse/nfldata",
-        "source_sha": source_sha,
+        "home_score": home_score,
+        "status": status,
     }
 
 
-def read_games(source_sha, season=None, limit=5):
-    """Read and standardize selected historical games."""
+def read_games(manifest, season=None, limit=5):
+    """Read games from the verified snapshot with its own provenance."""
 
     required_columns = {
-        "game_id",
-        "season",
-        "week",
-        "game_type",
-        "gameday",
-        "gametime",
-        "home_team",
-        "away_team",
-        "home_score",
-        "away_score",
+        "game_id", "season", "game_type", "week", "gameday", "gametime",
+        "away_team", "home_team", "away_rest", "home_rest", "div_game",
+        "location", "away_score", "home_score",
     }
 
     with CSV_PATH.open("r", encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
 
         if not required_columns.issubset(reader.fieldnames or []):
-            raise ValueError("CSV does not contain all required columns")
+            missing = sorted(required_columns - set(reader.fieldnames or []))
+            raise ValueError(f"CSV missing required columns: {', '.join(missing)}")
 
         selected = 0
 
-        for row in reader:
+        for row_number, row in enumerate(reader, start=2):
             if season is not None and row["season"] != str(season):
                 continue
 
-            # Use completed games for the initial development sample.
-            if not row["home_score"] or not row["away_score"]:
-                continue
-
-            game = standardize_game(row, source_sha)
+            try:
+                game = standardize_game(row, manifest)
+            except (ValueError, TypeError, KeyError, AttributeError) as error:
+                logger.error(
+                    "Invalid source CSV row %s (game_id=%r): %s",
+                    row_number, row.get("game_id"), error,
+                )
+                raise ValueError(f"Invalid CSV row {row_number}: {error}") from error
 
             yield game
-
             selected += 1
 
             if limit is not None and selected >= limit:
@@ -423,7 +442,7 @@ def main():
         count = 0
 
         for game in read_games(
-            source_sha=manifest["source_sha"],
+            manifest=manifest,
             season=args.season,
             limit=args.limit,
         ):
