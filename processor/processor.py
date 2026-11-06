@@ -1,154 +1,80 @@
-
-import redis 
-## lets python communicate with redis server
+"""Independent Redis consumer: python -m processor.processor."""
+import argparse
 import json
-## lets python convert json into python data
+import logging
+import os
+import redis
+from nfl.storage import Store
+from nfl.validation import validate
 
-REDIS_HOST = "localhost"
-REDIS_PORT = 6379
-STREAM_NAME = "nfl:games:v1"
-GROUP_NAME = "processors"
-CONSUMER_NAME = "worker-1"
-CONTRACT_VERSION = "1.0"
+STREAM_NAME = 'nfl:games:v1'
+GROUP_NAME = 'processors'
+log = logging.getLogger(__name__)
 
-REQUIRED_FIELDS = [
-    "contract_version",
-    "source_version",
-    "source_reference",
-    "retrieved_at",
-    "game_id",
-    "season",
-    "game_type",
-    "week",
-    "gameday",
-    "gametime",
-    "kickoff_timezone",
-    "away_team",
-    "home_team",
-    "away_rest",
-    "home_rest",
-    "div_game",
-    "location",
-    "away_score",
-    "home_score",
-    "status",
-]
-VALID_GAME_TYPES = {"REG", "WC", "DIV", "CON", "SB"}
- ## This creates a Redis connectionand checks that the 
- ## server responds
- 
+def process_entry(client, store, stream_id, fields, export_dir=None):
+    game = None
+    try:
+        game = json.loads(fields['payload'])
+        game = validate(game)
+        reason = '' if game['status'] == 'completed' else f"excluded {game['status']} game"
+    except (ValueError, TypeError, KeyError, OverflowError) as error:
+        reason = str(error)
+    decision = store.record(stream_id, game, reason)
+    if export_dir:
+        store.export(export_dir)
+    client.xack(STREAM_NAME, GROUP_NAME, stream_id)
+    log.info('stream_id=%s game_id=%s decision=%s reason=%s', stream_id,
+             game.get('game_id') if isinstance(game, dict) else None, decision, reason)
+    return decision
 
- 
+def run(client, store, consumer='worker-1', idle_ms=60000, once=False, export_dir=None):
+    try:
+        client.xgroup_create(STREAM_NAME, GROUP_NAME, id='0', mkstream=True)
+    except redis.ResponseError as error:
+        if 'BUSYGROUP' not in str(error):
+            raise
+    while True:
+        cursor = '0-0'
+        while True:
+            reply = client.xautoclaim(STREAM_NAME, GROUP_NAME, consumer, idle_ms, cursor, count=100)
+            cursor, entries = reply[:2]
+            for sid, fields in entries:
+                process_entry(client, store, sid, fields, export_dir)
+            if cursor == '0-0':
+                break
+        messages = client.xreadgroup(GROUP_NAME, consumer, {STREAM_NAME: '>'}, count=100, block=1000)
+        for _, entries in messages:
+            for sid, fields in entries:
+                process_entry(client, store, sid, fields, export_dir)
+        if once and not messages:
+            return
 
 def main():
-    client = redis.Redis(
-        host=REDIS_HOST,
-        port=REDIS_PORT,
-        decode_responses=True
-    )
-
-    client.ping()
-    print("Connected to Redis.")
-## Creates a redis connection and checks that the server responds
-
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--once', action='store_true')
+    parser.add_argument('--consumer', default='worker-1')
+    parser.add_argument('--claim-idle-ms', type=int, default=60000)
+    parser.add_argument('--export', action='store_true', help='single-writer CSV export')
+    args = parser.parse_args()
+    if args.claim_idle_ms < 0:
+        parser.error('claim idle must be nonnegative')
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+    client = redis.Redis(host=os.getenv('REDIS_HOST', 'localhost'), port=int(os.getenv('REDIS_PORT', '6379')), decode_responses=True, socket_connect_timeout=5, socket_timeout=10)
+    store = None
     try:
-        client.xgroup_create(
-            name=STREAM_NAME,
-            groupname=GROUP_NAME,
-            id="0",
-            mkstream=True
-        )
-        print(f"Created consumer group: {GROUP_NAME}")
-## creates a consumer group for the stream if it doesn't exist, and handles the case where the group already exists
-## they are used to read messages from the stream in a coordinated way, 
-## allowing multiple consumers to process messages without duplicating work
+        client.ping()
+        store = Store()
+        run(client, store, args.consumer, args.claim_idle_ms, args.once, 'data/staging' if args.export else None)
+    except KeyboardInterrupt:
+        log.info('Stopped; unacknowledged entries remain pending')
+    except Exception as error:
+        log.error('Processor stopped; failed delivery remains pending: %s', error)
+        raise SystemExit(1)
+    finally:
+        if store:
+            log.info('Outcomes: %s', store.counts())
+            store.close()
+        client.close()
 
-    except redis.exceptions.ResponseError as error:
-        if "BUSYGROUP" in str(error):
-            print(f"Consumer group already exists: {GROUP_NAME}")
-        else:
-            raise
-
-    print("Waiting for game messages...")
-
-    while True:
-        messages = client.xreadgroup(
-            groupname=GROUP_NAME,
-            consumername=CONSUMER_NAME,
-            streams={STREAM_NAME: ">"},
-            count=1,
-            block=5000
-        )
-## asks redis for up to one new message, waiting up to five seconds if necessary
-## the > means the consumer group should give this consumer new entries that haven't
-## already been delivered
-        for _name, entries in messages:
-            for stream_id, fields in entries:
-                print(f"Stream ID: {stream_id}")
-
-                try:
-                    payload = fields["payload"]
-                    game = json.loads(payload)
-                   
-                    if not isinstance(game, dict):
-                        print(f"Rejected message {stream_id}: payload must be a JSON object")
-                        client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-                        continue
-
-                    if game.get("contract_version") != CONTRACT_VERSION:
-                        print(f"Rejected Message {stream_id}: unsupported contract version")
-                        client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-                        continue
-
-                   
-                    missing_fields = [
-                        field for field in REQUIRED_FIELDS
-                        if field not in game
-                    ]
-
-                    if missing_fields:
-                        print(
-                            f"Rejected message {stream_id}: "
-                            f"missing required fields: {', '.join(missing_fields)}"
-                        )
-                        client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-                        continue
-
-
-                    season = game["season"]
-
-
-                    if not isinstance(season, int) or isinstance(season, bool) or not 1999 <= season <= 2100:
-                        print(f"Rejected message {stream_id}: invalid season")
-                        client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-                        continue
-
-                    week = game["week"]
-
-                    if not isinstance(week, int) or isinstance(week, bool) or not 1 <= week <= 22:
-                        print(f"Rejected message {stream_id}: invalid week")
-                        client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-                        continue
-
-                    game_type = game["game_type"]
-
-                    if game_type not in VALID_GAME_TYPES:
-                        print(f"Rejected message {stream_id}: invalid game_type")
-                        client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-                        continue
-
-                    print(f"Game ID: {game['game_id']}")
-
-                    client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-
-                except KeyError:
-                    print(f"Rejected message {stream_id}: missing required field")
-                    client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-
-                except json.JSONDecodeError:
-                    print(f"Rejected message {stream_id}: invalid JSON")
-                    client.xack(STREAM_NAME, GROUP_NAME, stream_id)
-## this reads the message and prints its game ID
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

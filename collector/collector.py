@@ -111,7 +111,7 @@ def fetch_metadata(session):
 
     metadata = response.json()
 
-    if not metadata.get("sha") or not metadata.get("download_url"):
+    if not isinstance(metadata, dict) or not metadata.get("sha") or not metadata.get("download_url"):
         raise ValueError("GitHub metadata is missing required fields")
 
     return metadata, response.status_code
@@ -129,9 +129,12 @@ def load_manifest():
 
     try:
         with MANIFEST_PATH.open("r", encoding="utf-8") as file:
-            return json.load(file)
+            manifest = json.load(file)
+            if not isinstance(manifest, dict):
+                raise ValueError("Manifest must be a JSON object")
+            return manifest
 
-    except (OSError, json.JSONDecodeError) as error:
+    except (OSError, ValueError) as error:
         logger.warning("Unable to read manifest: %s", error)
         return None
 
@@ -415,6 +418,8 @@ def main():
     parser.add_argument("--season", type=int, default=2024)
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--all-seasons", action="store_true", help="Ignore the season filter")
+    parser.add_argument("--all-records", action="store_true", help="Ignore the development record limit")
 
     args = parser.parse_args()
 
@@ -443,8 +448,8 @@ def main():
 
         for game in read_games(
             manifest=manifest,
-            season=args.season,
-            limit=args.limit,
+            season=None if args.all_seasons else args.season,
+            limit=None if args.all_records else args.limit,
         ):
             if args.dry_run:
                 print(json.dumps(game, indent=2))

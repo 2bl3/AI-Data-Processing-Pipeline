@@ -1,0 +1,1 @@
+2026_10_WAS_NYG | 2026-11-12 | WAS at NYG | winner NYG | estimated probability 62.6% | logistic-67e898fa4058 | trained through 2024-02-11 | unscored snapshot matchup

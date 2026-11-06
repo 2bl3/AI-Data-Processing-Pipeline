@@ -1,0 +1,47 @@
+{
+  "model_version": "logistic-67e898fa4058",
+  "training_cutoff": "2024-02-11",
+  "test_start": "2024-09-05",
+  "test_end": "2026-11-02",
+  "train_games": 6692,
+  "test_games": 689,
+  "train_home_win_rate": 0.5661984459055589,
+  "test_home_win_rate": 0.5370101596516691,
+  "test_season": 2024,
+  "source_versions": [
+    "32e734a73d6403841a9742af3ae6f8ee2b98b38f"
+  ],
+  "features": [
+    "week",
+    "home_rest",
+    "away_rest",
+    "div_game",
+    "neutral",
+    "home_recent_win_rate",
+    "away_recent_win_rate",
+    "home_recent_margin",
+    "away_recent_margin",
+    "home_history_games",
+    "away_history_games"
+  ],
+  "libraries": {
+    "pandas": "3.1.1",
+    "scikit-learn": "1.9.1",
+    "numpy": "2.5.4",
+    "joblib": "1.6.0"
+  },
+  "metrics": {
+    "baseline": {
+      "accuracy": 0.5370101596516691,
+      "brier": 0.24948220413699693,
+      "log_loss": 0.6921314429474416
+    },
+    "logistic": {
+      "accuracy": 0.6240928882438317,
+      "brier": 0.22481677113350038,
+      "log_loss": 0.6398340524529667
+    }
+  },
+  "probability_note": "Estimated probability conditional on a non-tied result; not certainty.",
+  "command": "python -m nfl.cli train --test-season 2024"
+}

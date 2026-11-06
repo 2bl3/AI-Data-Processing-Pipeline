@@ -1,0 +1,60 @@
+Real service exercise. Cached provenance is retained; no source snapshot overwritten.
+{"metadata_http_status": 200, "remote_source_sha": "3b95a8e4cc53bdcf688d5e3222a67bef6dbe61cd", "download_url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"}
+{"cached_manifest": {"filename": "games.csv", "source_api": "https://api.github.com/repos/nflverse/nfldata/contents/data/games.csv", "source_sha": "32e734a73d6403841a9742af3ae6f8ee2b98b38f", "download_url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv", "retrieved_at": "2026-11-03T17:02:08.834506+00:00", "metadata_http_status": 200, "csv_http_status": 200, "size_bytes": 2187853}}
+UNREACHABLE SOURCE: actual connection failure: ConnectTimeout; no messages or cache changes
+COMMAND -m collector.collector --offline --all-seasons --all-records
+exit=0
+2026-11-05 16:20:50,956 | INFO | Published game 2026_18_LV_KC as message 1793913650953-0
+2026-11-05 16:20:50,959 | INFO | Published game 2026_18_SEA_LA as message 1793913650956-0
+2026-11-05 16:20:50,962 | INFO | Published game 2026_18_CHI_MIN as message 1793913650959-0
+2026-11-05 16:20:50,966 | INFO | Published game 2026_18_MIA_NE as message 1793913650962-0
+2026-11-05 16:20:50,968 | INFO | Published game 2026_18_TB_NO as message 1793913650966-0
+2026-11-05 16:20:50,970 | INFO | Published game 2026_18_PHI_NYG as message 1793913650968-0
+2026-11-05 16:20:50,972 | INFO | Published game 2026_18_DAL_WAS as message 1793913650970-0
+2026-11-05 16:20:50,973 | INFO | Collector finished: 7548 games
+{"processor": "stopped during collector publication", "stream_length": 7548}
+COMMAND -m processor.processor --once --claim-idle-ms 0
+exit=0
+2026-11-05 16:22:30,938 INFO stream_id=1793913650953-0 game_id=2026_18_LV_KC decision=rejected reason=excluded scheduled game
+2026-11-05 16:22:30,949 INFO stream_id=1793913650956-0 game_id=2026_18_SEA_LA decision=rejected reason=excluded scheduled game
+2026-11-05 16:22:30,961 INFO stream_id=1793913650959-0 game_id=2026_18_CHI_MIN decision=rejected reason=excluded scheduled game
+2026-11-05 16:22:30,972 INFO stream_id=1793913650962-0 game_id=2026_18_MIA_NE decision=rejected reason=excluded scheduled game
+2026-11-05 16:22:30,984 INFO stream_id=1793913650966-0 game_id=2026_18_TB_NO decision=rejected reason=excluded scheduled game
+2026-11-05 16:22:30,995 INFO stream_id=1793913650968-0 game_id=2026_18_PHI_NYG decision=rejected reason=excluded scheduled game
+2026-11-05 16:22:31,008 INFO stream_id=1793913650970-0 game_id=2026_18_DAL_WAS decision=rejected reason=excluded scheduled game
+2026-11-05 16:22:32,106 INFO Outcomes: {'seen': 7548, 'accepted': 7397, 'rejected': 151, 'duplicate': 0}
+{"groups": [{"name": "processors", "consumers": 1, "pending": 0, "last-delivered-id": "1793913650970-0", "entries-read": 7548, "lag": 0}]}
+{"after_first_ingest": {"seen": 7548, "accepted": 7397, "rejected": 151, "duplicate": 0}}
+{"malformed_stream_id": "1793913752562-0", "duplicate_stream_id": "1793913752566-0", "game_id": "1999_01_ARI_PHI"}
+COMMAND -m processor.processor --once --claim-idle-ms 0
+exit=0
+2026-11-05 16:22:33,456 INFO stream_id=1793913752562-0 game_id=None decision=rejected reason=Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+2026-11-05 16:22:33,478 INFO stream_id=1793913752566-0 game_id=1999_01_ARI_PHI decision=duplicate reason=
+2026-11-05 16:22:34,517 INFO Outcomes: {'seen': 7550, 'accepted': 7397, 'rejected': 152, 'duplicate': 1}
+{"after_invalid_duplicate": {"seen": 7550, "accepted": 7397, "rejected": 152, "duplicate": 1}, "groups": [{"name": "processors", "consumers": 1, "pending": 0, "last-delivered-id": "1793913752566-0", "entries-read": 7550, "lag": 0}]}
+{"sql": "-- Filtered season/team query.\nSELECT game_id, gameday, home_team, away_team FROM games\nWHERE season = 2024 AND (home_team = 'KC' OR away_team = 'KC') ORDER BY gameday", "sample": [["2024_01_BAL_KC", "2024-09-05", "KC", "BAL"], ["2024_02_CIN_KC", "2024-09-15", "KC", "CIN"], ["2024_03_KC_ATL", "2024-09-22", "ATL", "KC"], ["2024_04_KC_LAC", "2024-09-29", "LAC", "KC"], ["2024_05_NO_KC", "2024-10-07", "KC", "NO"], ["2024_07_KC_SF", "2024-10-20", "SF", "KC"]], "result_rows": 20}
+Resumed after correcting a semicolon in a SQL comment that confused the evidence runner statement splitter.
+{"sql": "-- Filtered season/team query.\nSELECT game_id, gameday, home_team, away_team FROM games\nWHERE season = 2024 AND (home_team = 'KC' OR away_team = 'KC') ORDER BY gameday", "sample": [["2024_01_BAL_KC", "2024-09-05", "KC", "BAL"], ["2024_02_CIN_KC", "2024-09-15", "KC", "CIN"], ["2024_03_KC_ATL", "2024-09-22", "ATL", "KC"], ["2024_04_KC_LAC", "2024-09-29", "LAC", "KC"], ["2024_05_NO_KC", "2024-10-07", "KC", "NO"], ["2024_07_KC_SF", "2024-10-20", "SF", "KC"]], "result_rows": 20}
+{"sql": "-- Aggregate historical home win rate, with ties counted separately.\nSELECT season, COUNT(*) AS games,\n AVG(((payload->>'home_score')::integer > (payload->>'away_score')::integer)::integer) AS home_win_rate,\n SUM(((payload->>'home_score')::integer = (payload->>'away_score')::integer)::integer) AS ties\nFROM games GROUP BY season ORDER BY season", "sample": [[1999, 259, "0.59845559845559845560", 0], [2000, 259, "0.56370656370656370656", 0], [2001, 259, "0.55598455598455598456", 0], [2002, 267, "0.58801498127340823970", 1], [2003, 267, "0.61423220973782771536", 0], [2004, 267, "0.56554307116104868914", 0]], "result_rows": 28}
+{"sql": "-- Feature construction: strict earlier-day boundary.\nSELECT payload FROM games WHERE gameday < DATE '2025-09-01' ORDER BY gameday, game_id", "sample": [[{"week": 1, "season": 1999, "status": "completed", "game_id": "1999_01_ARI_PHI", "gameday": "1999-09-12", "div_game": 1, "gametime": null, "location": "Home", "away_rest": 7, "away_team": "ARI", "game_type": "REG", "home_rest": 7, "home_team": "PHI", "away_score": 25, "home_score": 24, "retrieved_at": "2026-11-03T17:02:08.834506+00:00", "source_version": "32e734a73d6403841a9742af3ae6f8ee2b98b38f", "contract_version": "1.0", "kickoff_timezone": "America/New_York", "source_reference": "https://github.com/nflverse/nfldata/blob/master/data/games.csv"}], [{"week": 1, "season": 1999, "status": "completed", "game_id": "1999_01_BAL_STL", "gameday": "1999-09-12", "div_game": 0, "gametime": null, "location": "Home", "away_rest": 7, "away_team": "BAL", "game_type": "REG", "home_rest": 7, "home_team": "LA", "away_score": 10, "home_score": 27, "retrieved_at": "2026-11-03T17:02:08.834506+00:00", "source_version": "32e734a73d6403841a9742af3ae6f8ee2b98b38f", "contract_version": "1.0", "kickoff_timezone": "America/New_York", "source_reference": "https://github.com/nflverse/nfldata/blob/master/data/games.csv"}], [{"week": 1, "season": 1999, "status": "completed", "game_id": "1999_01_BUF_IND", "gameday": "1999-09-12", "div_game": 1, "gametime": null, "location": "Home", "away_rest": 7, "away_team": "BUF", "game_type": "REG", "home_rest": 7, "home_team": "IND", "away_score": 14, "home_score": 31, "retrieved_at": "2026-11-03T17:02:08.834506+00:00", "source_version": "32e734a73d6403841a9742af3ae6f8ee2b98b38f", "contract_version": "1.0", "kickoff_timezone": "America/New_York", "source_reference": "https://github.com/nflverse/nfldata/blob/master/data/games.csv"}], [{"week": 1, "season": 1999, "status": "completed", "game_id": "1999_01_CAR_NO", "gameday": "1999-09-12", "div_game": 1, "gametime": null, "location": "Home", "away_rest": 7, "away_team": "CAR", "game_type": "REG", "home_rest": 7, "home_team": "NO", "away_score": 10, "home_score": 19, "retrieved_at": "2026-11-03T17:02:08.834506+00:00", "source_version": "32e734a73d6403841a9742af3ae6f8ee2b98b38f", "contract_version": "1.0", "kickoff_timezone": "America/New_York", "source_reference": "https://github.com/nflverse/nfldata/blob/master/data/games.csv"}], [{"week": 1, "season": 1999, "status": "completed", "game_id": "1999_01_CIN_TEN", "gameday": "1999-09-12", "div_game": 1, "gametime": null, "location": "Home", "away_rest": 7, "away_team": "CIN", "game_type": "REG", "home_rest": 7, "home_team": "TEN", "away_score": 35, "home_score": 36, "retrieved_at": "2026-11-03T17:02:08.834506+00:00", "source_version": "32e734a73d6403841a9742af3ae6f8ee2b98b38f", "contract_version": "1.0", "kickoff_timezone": "America/New_York", "source_reference": "https://github.com/nflverse/nfldata/blob/master/data/games.csv"}], [{"week": 1, "season": 1999, "status": "completed", "game_id": "1999_01_DAL_WAS", "gameday": "1999-09-12", "div_game": 1, "gametime": null, "location": "Home", "away_rest": 7, "away_team": "DAL", "game_type": "REG", "home_rest": 7, "home_team": "WAS", "away_score": 41, "home_score": 35, "retrieved_at": "2026-11-03T17:02:08.834506+00:00", "source_version": "32e734a73d6403841a9742af3ae6f8ee2b98b38f", "contract_version": "1.0", "kickoff_timezone": "America/New_York", "source_reference": "https://github.com/nflverse/nfldata/blob/master/data/games.csv"}]], "result_rows": 6991}
+{"sql": "EXPLAIN (ANALYZE, BUFFERS) SELECT game_id FROM games WHERE season = 2024 ORDER BY gameday", "sample": [["Index Scan using games_season_day on games  (cost=0.28..438.58 rows=285 width=19) (actual time=0.021..0.073 rows=285 loops=1)"], ["  Index Cond: (season = 2024)"], ["  Buffers: shared hit=30"], ["Planning Time: 0.072 ms"], ["Execution Time: 0.097 ms"]], "result_rows": 5}
+COMMAND -m nfl.cli train --test-season 2024
+exit=0
+      "accuracy": 0.6240928882438317,
+      "brier": 0.22481677113350038,
+      "log_loss": 0.6398340524529667
+    }
+  },
+  "probability_note": "Estimated probability conditional on a non-tied result; not certainty.",
+  "command": "python -m nfl.cli train --test-season 2024"
+}
+{"valid_request": {"home_team": "NYG", "away_team": "WAS", "season": 2026, "week": 10}, "status": 200, "response": {"game_id": "2026_10_WAS_NYG", "gameday": "2026-11-12", "season": 2026, "week": 10, "away_team": "WAS", "home_team": "NYG", "predicted_winner": "NYG", "estimated_win_probability": 0.6258603791397211, "home_win_probability": 0.6258603791397211, "model_version": "logistic-67e898fa4058", "training_cutoff": "2024-02-11", "history_latest_day": "2026-11-01", "probability_note": "Estimated probability conditional on a non-tied result; not certainty.", "context": "unscored snapshot matchup"}}
+{"invalid_status": 422, "response": {"detail": "unrecognized team: BAD"}}
+COMMAND -m nfl.cli predict --season 2026 --week 10 --home NYG --away WAS
+exit=0
+2026_10_WAS_NYG | 2026-11-12 | WAS at NYG | winner NYG | estimated probability 62.6% | logistic-67e898fa4058 | trained through 2024-02-11 | unscored snapshot matchup
+API process stopped; Redis and PostgreSQL remain responsive
+{"api_restart_status": 200, "prediction_unchanged": true}
+{"failure": "missing model", "status": 503, "response": {"detail": "Trained model unavailable; run the train command"}}
+{"failure": "unreachable store", "status": 503, "response": {"detail": "History store unavailable: ConnectionTimeout: connection timeout expired"}}
+Real-service end-to-end exercise completed. API stopped; Docker stores retained.

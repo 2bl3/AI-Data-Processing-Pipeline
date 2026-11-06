@@ -1,0 +1,18 @@
+name: nfl-project
+services:
+  redis:
+    image: redis:7.2
+    command: redis-server --appendonly yes --appendfsync always
+    ports: ["127.0.0.1:6379:6379"]
+    volumes: ["redis-data:/data"]
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: nfl
+      POSTGRES_DB: nfl
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in PowerShell}
+    ports: ["127.0.0.1:${POSTGRES_PORT:-55432}:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+volumes:
+  redis-data:
+  postgres-data:

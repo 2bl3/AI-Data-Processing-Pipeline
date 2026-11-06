@@ -1,0 +1,11 @@
+week,home_rest,away_rest,div_game,neutral,home_recent_win_rate,home_recent_margin,home_history_games,away_recent_win_rate,away_recent_margin,away_history_games,game_id,gameday,season,source_version,history_latest_day,home_win
+1,7,7,1,0,,,0,,,0,1999_01_ARI_PHI,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,0
+1,7,7,0,0,,,0,,,0,1999_01_BAL_STL,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,1
+1,7,7,1,0,,,0,,,0,1999_01_BUF_IND,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,1
+1,7,7,1,0,,,0,,,0,1999_01_CAR_NO,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,1
+1,7,7,1,0,,,0,,,0,1999_01_CIN_TEN,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,1
+1,7,7,1,0,,,0,,,0,1999_01_DAL_WAS,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,0
+1,7,7,0,0,,,0,,,0,1999_01_DET_SEA,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,0
+1,7,7,0,0,,,0,,,0,1999_01_KC_CHI,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,1
+1,7,7,0,0,,,0,,,0,1999_01_MIN_ATL,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,0
+1,7,7,1,0,,,0,,,0,1999_01_NE_NYJ,1999-09-12,1999,32e734a73d6403841a9742af3ae6f8ee2b98b38f,,0

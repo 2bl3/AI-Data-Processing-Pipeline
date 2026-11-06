@@ -1,0 +1,234 @@
+# NFL Prediction Project — Complete Implementation and Testing
+
+You are working as a software engineering agent in my existing NFL Prediction Project repository.
+
+I have supplied the CYB3023 Week 6, Week 7, and Week 8 HTML assignment instructions. **Your objective is to complete all three assignments as one integrated, working NFL prediction system**, following the provided instructions and rubrics.
+
+You have permission to create, edit, reorganize, and test project files as necessary. Work directly in the repository rather than only providing suggestions or code snippets.
+
+**Important: I do not want a web-based GUI at this time. The final system should generate and display NFL predictions directly in the terminal.** If the assignments require an API, implement the necessary API functionality, but do not build a frontend. Provide a command-line interface for making and viewing predictions.
+
+## 1. Review the assignment requirements first
+
+Before implementing anything:
+
+1. Read all three assignment HTML documents in full.
+2. Inspect the existing repository, including the collector, processor, message contract, dependency files, and documentation.
+3. Determine which requirements are already implemented, partially implemented, or missing.
+4. Identify dependencies between the Week 6, 7, and 8 deliverables.
+5. Create a concise implementation plan and requirements checklist mapped to the actual assignment rubrics.
+
+Treat the assignment documents as the authoritative requirements. Do not invent requirements or silently skip any.
+
+If an assignment specifically requires an API, model evaluation, database, or another component, implement it even if I will primarily interact through the terminal.
+
+## 2. Preserve and complete the Week 6 pipeline
+
+The existing architecture is:
+
+GitHub nflverse → Python Collector → Redis Streams → Python Processor → Validated Staging Dataset
+
+Existing contract:
+
+`contracts/message-contract.md`
+
+Existing Redis Stream:
+
+`nfl:games:v1`
+
+Unless the assignment requirements make a change unavoidable, preserve Message Contract v1.0 and its existing field names, types, and missing-value rules.
+
+Complete and verify the following:
+
+- GitHub API metadata retrieval and source-version tracking.
+- Historical NFL CSV downloading and caching.
+- HTTP timeouts, bounded retries, and useful logs.
+- Standardization according to the message contract.
+- Redis Streams publishing.
+- Independent collector and processor execution.
+- Consumer group message handling.
+- Full data validation.
+- Duplicate detection using unique game identifiers.
+- Persistent staging CSV and rejection logging.
+- Acknowledgment only after a processing outcome is safely recorded.
+- Pending-message recovery after processor failures.
+- All four required Week 6 failure demonstrations.
+
+Preserve source provenance and ensure the data is reproducible.
+
+Do not confuse Redis message IDs with NFL game IDs.
+
+## 3. Implement the Week 7 and Week 8 requirements
+
+Follow the actual Week 7 and Week 8 assignment documents for their architecture, technologies, deliverables, and evaluation criteria.
+
+Extend the existing pipeline rather than creating an unrelated prediction application.
+
+Where required, implement appropriate components for:
+
+- Loading and persisting validated game data.
+- Preparing training and prediction datasets.
+- Feature engineering.
+- Model training and evaluation.
+- Generating predictions for NFL games.
+- Persisting or retrieving predictions.
+- Any required APIs, services, or distributed-system functionality.
+
+Do not assume these are all required merely because they are listed here. Verify each against the assignment documents and implement whatever those documents actually specify.
+
+Use only information that would have been available before kickoff as prediction features. Actual game results, final scores, and postgame statistics must not leak into pregame predictions.
+
+If a requested feature cannot be supported by the source data, document the limitation and choose a defensible alternative consistent with the instructions.
+
+## 4. Terminal-based prediction interface
+
+Implement a straightforward terminal interface allowing me to run the completed prediction system without a graphical frontend.
+
+Ideally, I should be able to:
+
+- Train or retrain the prediction model.
+- Generate predictions for an NFL week or selected games.
+- View predicted winners and estimated win probabilities.
+- View the model's evaluation results.
+- See meaningful error messages when input data or required services are unavailable.
+
+Design the exact commands based on the existing repository and assignment requirements.
+
+A prediction should clearly identify the matchup, game date or week, predicted winner, win probability, and model version or training context where supported.
+
+Do not fabricate probabilities or game predictions. All prediction output must come from the actual trained model.
+
+If future matchups cannot be determined reliably from the available data, explain that limitation instead of inventing schedules.
+
+## 5. Architecture and engineering standards
+
+Keep components modular and responsibilities clearly separated.
+
+Use meaningful function names, readable Python, and comments that explain important decisions rather than restating obvious syntax.
+
+Use appropriate virtual-environment dependencies and update `requirements.txt`.
+
+Prefer the existing Python and Docker technology stack unless the assignment specifies otherwise.
+
+Add configuration through environment variables when appropriate. Do not hardcode credentials.
+
+Use reproducible file paths and startup commands suitable for Windows PowerShell with Docker Desktop.
+
+Maintain compatibility with the existing Redis Stream contract and preserve successful existing functionality.
+
+If you find an error in the contract or a conflict between documents, report it before making a breaking change. Document any justified contract migration.
+
+## 6. Testing requirements
+
+Do not stop after writing code. Execute tests and verify behavior.
+
+At minimum, test:
+
+**Collector and source handling**
+- Successful metadata retrieval.
+- Cache reuse when the source SHA is unchanged.
+- Missing or corrupted cache.
+- Unavailable upstream source.
+- Invalid source data.
+
+**Redis and processor**
+- Successful message publication and consumption.
+- Valid completed game.
+- Malformed JSON.
+- Missing or incorrectly typed fields.
+- Duplicate game delivery.
+- Processor shutdown and restart.
+- Pending-message recovery.
+- Safe acknowledgment behavior.
+
+**Prediction pipeline**
+- Valid training dataset creation.
+- Missing-data handling.
+- Prevention of target leakage.
+- Model training and artifact persistence.
+- Model evaluation on held-out games.
+- Repeatable predictions from a saved model.
+- Terminal prediction output.
+
+Add automated tests where practical using an appropriate Python testing framework.
+
+If Docker is available, execute real Redis integration tests rather than relying exclusively on mocks.
+
+Do not claim tests passed unless they actually ran. For anything that cannot be tested, document the exact reason and the command required to test it later.
+
+## 7. Model quality and evaluation
+
+Use a sensible baseline before introducing unnecessary complexity.
+
+Follow the assignments' required modeling approach and metrics, if specified.
+
+For historical NFL prediction, use a chronological train/test split or another leakage-safe evaluation strategy appropriate to the assignment.
+
+Clearly separate training data from evaluation data.
+
+Report the metrics required by the assignments and explain what the results mean.
+
+Do not describe the model as accurate or reliable solely because the training code executes.
+
+Distinguish between prediction confidence, estimated probability, and demonstrated predictive accuracy.
+
+## 8. Documentation and deliverables
+
+Create or update:
+
+- Root `README.md`.
+- Architecture and data-flow documentation.
+- Source and field mapping.
+- Dependency and environment setup instructions.
+- Instructions for starting and stopping services.
+- Collector, processor, training, and prediction commands.
+- Model evaluation results.
+- Failure experiment evidence.
+- Automated test instructions.
+- Known limitations and future improvements.
+- A requirements checklist mapping each Week 6–8 rubric item to its implementation and evidence.
+
+Preserve the assignment's required deliverable structure. Prepare submission-ready folders or ZIP exports if required, excluding virtual environments, large unnecessary datasets, credentials, and generated caches unless explicitly required.
+
+Do not fabricate screenshots, test evidence, teammate contributions, or AI interaction logs. Clearly mark anything I must personally provide.
+
+## 9. Agent execution instructions
+
+Work through the implementation in logical stages.
+
+You are authorized to:
+- Inspect and modify repository files.
+- Create missing directories and modules.
+- Install necessary project dependencies.
+- Run Python programs and automated tests.
+- Start and stop project-specific Docker containers.
+- Debug errors and iterate until the system works.
+- Update documentation.
+- Create a consistent terminal-based workflow.
+
+Do not delete unrelated files, remove existing user data, modify global machine configuration unnecessarily, commit changes, or push to GitHub without my approval.
+
+Before modifying an existing file, understand its purpose and avoid overwriting working functionality unnecessarily.
+
+Do not stop at a plan. After creating the plan, proceed with implementation and testing.
+
+## 10. Final report
+
+When finished, provide:
+
+1. A summary of the completed system.
+2. A Week 6, 7, and 8 requirements checklist with completion status.
+3. A list of files created or modified.
+4. The terminal commands needed to run the system from a fresh environment.
+5. The actual model evaluation metrics.
+6. A sample of real terminal-generated prediction output, if execution succeeded.
+7. Tests executed and their results.
+8. Any incomplete requirements or blockers.
+9. Important architectural decisions and limitations.
+10. A concise explanation of how one NFL game travels from the original source through the prediction process.
+
+**Educational requirement:** I must be able to understand and explain the implementation to my professor. Keep the architecture understandable, and include a brief explanation of each major component, its responsibilities, and how it communicates with the others.
+
+The end goal is a functional, reproducible NFL prediction pipeline that satisfies Weeks 6–8, with predictions displayed in the terminal rather than through a web GUI.
+
+Begin by auditing the repository and assignment instructions, then implement and test the missing functionality.
